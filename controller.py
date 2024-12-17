@@ -24,7 +24,6 @@ class Controller:
     ring_finger_within_Thumb_finger = None
     screen_width, screen_height = pyautogui.size()
 
-
     def update_fingers_status():
         Controller.little_finger_down = Controller.hand_Landmarks.landmark[20].y > Controller.hand_Landmarks.landmark[17].y
         Controller.little_finger_up = Controller.hand_Landmarks.landmark[20].y < Controller.hand_Landmarks.landmark[17].y
@@ -48,28 +47,19 @@ class Controller:
         current_x = int(hand_x_position * Controller.screen_width)
         current_y = int(hand_y_position * Controller.screen_height)
 
-        ratio = 1
-        Controller.prev_hand = (current_x, current_y) if Controller.prev_hand is None else Controller.prev_hand
-        delta_x = current_x - Controller.prev_hand[0]
-        delta_y = current_y - Controller.prev_hand[1]
-        
-        Controller.prev_hand = [current_x, current_y]
-        current_x , current_y = old_x + delta_x * ratio , old_y + delta_y * ratio
+        # suavzado
+        smooth_ratio = 0.3  # ajusta este valor segun sea necesario
+        current_x = int(old_x * (1 - smooth_ratio) + current_x * smooth_ratio)
+        current_y = int(old_y * (1 - smooth_ratio) + current_y * smooth_ratio)
 
+        # Logica de límites 
         threshold = 5
-        if current_x < threshold:
-            current_x = threshold
-        elif current_x > Controller.screen_width - threshold:
-            current_x = Controller.screen_width - threshold
-        if current_y < threshold:
-            current_y = threshold
-        elif current_y > Controller.screen_height - threshold:
-            current_y = Controller.screen_height - threshold
+        current_x = max(threshold, min(current_x, Controller.screen_width - threshold))
+        current_y = max(threshold, min(current_y, Controller.screen_height - threshold))
+        return (current_x, current_y)
 
-        return (current_x,current_y)
-        
     def cursor_moving():
-        point = 9
+        point = 0
         current_x, current_y = Controller.hand_Landmarks.landmark[point].x ,Controller.hand_Landmarks.landmark[point].y
         x, y = Controller.get_position(current_x, current_y)
         cursor_freezed = Controller.all_fingers_up and Controller.Thump_finger_down
@@ -87,7 +77,6 @@ class Controller:
             pyautogui.scroll(-120)
             print("Scrolling DOWN")
     
-
     def detect_zoomming():
         zoomming = Controller.index_finger_up and Controller.middle_finger_up and Controller.ring_finger_down and Controller.little_finger_down
         window = .05
